@@ -123,6 +123,7 @@ function views_send_views_form_substitutions() {
  *
  * The actual insertion is done by JS, matching the degradation behavior
  * of Drupal core (no JS - no select all).
+ // TODO: DIE
  */
 function theme_views_send_select_all($variables) {
   $form = array();
@@ -146,6 +147,7 @@ function theme_views_send_select_all($variables) {
 
 /**
  * Implements hook_form_alter().
+ TODO: DIE
  */
 function views_send_form_alter(&$form, &$form_state, $form_id) {
   if (strpos($form_id, 'views_form_') === 0) {
@@ -201,6 +203,7 @@ function views_send_form_alter(&$form, &$form_state, $form_id) {
 
 /**
  * Multistep form callback for the "configure" step.
+ TODO: DIE
  *
  @TODO: Hide "Sender" (from) if Mandrill is used.
  */
@@ -878,7 +881,7 @@ function views_send_permission() {
  */
 function views_send_theme($existing, $type, $theme, $path) {
   return array(
-    'views_send_select_all' => array(
+    'views_send_select_all' => array( // KILL!
       'variables' => array(),
     ),
     'views_send_token_help' => array(
@@ -1269,7 +1272,8 @@ function _views_send_get_fields_and_tokens($view, $type) {
   $fields = array();
   $tokens = array();
   $fields_name_text = array();
-  foreach ($view->field as $field_name => $field) {
+  $view_fields = $view->display_handler->get_handlers('field');
+  foreach ($view_fields as $field_name => $field) {
     // Ignore Views Form fields.
     if (property_exists($field, 'views_form_callback') || method_exists($field, 'views_form')) {
       continue;
@@ -1292,7 +1296,9 @@ function _views_send_get_fields_and_tokens($view, $type) {
       $field_key = $field_name;
     }
     // Add field position to ensure unique keys.
-    $field_key .= '_pos_' . $field->position;
+    // TODO: not sure what this is for, as $field_name is already unique.
+    //$field_key .= '_pos_' . $field->position;
+    $field_key = $field_name;
     $field_text = $field->label() . ' (' . $field_name . ')';
     $fields[$field_key] = $field_text;
     $tokens[$field_key] = $field_name;
@@ -1352,4 +1358,11 @@ function _views_send_email_message_property_info() {
   return $propertyinfo;
 }
 
-
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function views_send_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'views_bulk_operations') {
+    return 'plugins/' . $plugin_type;
+  }
+}
