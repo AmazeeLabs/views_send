@@ -73,8 +73,6 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
    */
   public function adminOptionsForm($dom_id, $handler) {
     $form = parent::adminOptionsForm($dom_id, $handler);
-    
-    dsm($form);
 
     //TODO: move this to a patch :(
 
@@ -132,8 +130,6 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
     $fields_name_text = _views_send_get_fields_and_tokens($view, 'fields_name_text');
     $fields_options = array_merge(array('' => '<' . t('select') . '>'), $fields);
     
-    dsm($tokens);
-
     $handler = _views_bulk_operations_get_field($view);
 
     // Add the values from configuration to the form now so we have them in
@@ -234,7 +230,6 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
         '#markup' => theme('token_tree', array('token_types' => $token_types))
       );
     }
-    dsm($form);
     return $form;
   }
 
@@ -262,7 +257,6 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
    *   An array containing the current state of the form.
    */
   public function formSubmit($form, &$form_state) {
-    //dsm($form_state, 'submit!');
 
     $subject = $form_state['values']['views_send_subject'];
     $body = $form_state['values']['views_send_message']['value'];
@@ -351,7 +345,6 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
       $token_keys[] = VIEWS_SEND_TOKEN_PREFIX .  sprintf(VIEWS_SEND_TOKEN_PATTERN, $field_name) . VIEWS_SEND_TOKEN_POSTFIX;
       $token_values[] = $this->formOptions['view']->style_plugin->get_field($row_id, $field_name);
     }
-    dsm($token_values);
 
     // Views Send specific token replacements
     $subject = str_replace($token_keys, $token_values, $this->formOptions['subject']);
@@ -405,7 +398,9 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
 
     _views_send_prepare_mail($message, $plain_format, $attachments);
     // Queue the message to the spool table.
-    db_insert('views_send_spool')->fields($message)->execute();
+    $fields = $message;
+    unset($fields['send']);
+    db_insert('views_send_spool')->fields($fields)->execute();
     if (module_exists('rules')) {
       rules_invoke_event('views_send_email_added_to_spool', $message);
     }

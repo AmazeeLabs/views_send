@@ -33,7 +33,7 @@ function views_send_vbo_views_send_list($operation_id = NULL) {
     // that can be used as an email.
     'type' => 'user', // TODO! nope, will need one of these per entity type!! array_keys(entity_get_info()),
     // TODO! Can't use 'Send email', there is a core action called this already!
-    'label' => t('VIEWS SEND'),
+    'label' => t('Send e-mail (via views_send)'),
     // Argh no idea what most of these do. Documentation would be nice!
     'parameters' => array(),
     'configurable' => TRUE,
