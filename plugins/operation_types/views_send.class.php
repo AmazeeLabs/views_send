@@ -230,6 +230,19 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
         '#markup' => theme('token_tree', array('token_types' => $token_types))
       );
     }
+
+    if (VIEWS_SEND_MIMEMAIL && user_access('attachments with views_send')) {
+      // set the form encoding type
+      $form['#attributes']['enctype'] = "multipart/form-data";
+
+      // add a file upload file
+      $form['mail']['views_send_attachments'] = array(
+        '#type' => 'file',
+        '#title' => t('Attachment'),
+        '#description' => t('NB! The attached file is stored once per recipient in the database if you aren\'t sending the message directly.'),
+      );
+    }
+
     return $form;
   }
 
@@ -279,6 +292,15 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
     // TODO: tokens, etc.
 
 
+    $attachments = array();
+    if (VIEWS_SEND_MIMEMAIL && user_access('attachments with views_send') && isset($_FILES['files']) && is_uploaded_file($_FILES['files']['tmp_name']['views_send_attachments'])) {
+      $dir = file_default_scheme() . '://views_send_attachments';
+      file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
+      $file = file_save_upload('views_send_attachments', array(), $dir);
+      if ($file) {
+        $attachments[] = (array) $file;
+      }
+    }
 
 
     $this->formOptions = array(
@@ -290,6 +312,7 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
       'views_send_to_mail' => $form['#views_send_to_mail'],
       'views_send_tokens' => $form['#views_send_tokens'],
       'view' => $form['#view'],
+      'views_send_attachments' => $attachments,
     );
   }
 
@@ -381,7 +404,7 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
     );
     $headers = _views_send_headers($params['views_send_receipt'], $params['views_send_priority'], $from_mail, $params['views_send_headers']);
 
-    $attachments = isset($params['views_send_attachments']) ?  $params['views_send_attachments'] : array();
+    $attachments = isset($this->formOptions['views_send_attachments']) ?  $this->formOptions['views_send_attachments'] : array();
 
     $message = array(
       'uid' => $user->uid,
@@ -400,17 +423,9 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
     drupal_alter('views_send_mail', $message);
 
     _views_send_prepare_mail($message, $plain_format, $attachments);
-    // Queue the message to the spool table.
-    $fields = $message;
-    unset($fields['send']);
-    db_insert('views_send_spool')->fields($fields)->execute();
-    if (module_exists('rules')) {
-      rules_invoke_event('views_send_email_added_to_spool', $message);
-    }
+    views_send_deliver($message);
 
-    // Enabled other modules to act just after a message is queued
-    // by providing the hook 'views_send_mail_queued'.
-    module_invoke_all('views_send_mail_queued', $message, $view, $row_id);
+    module_invoke_all('views_send_email_sent', $message);
 
   }
 
