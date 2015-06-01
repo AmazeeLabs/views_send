@@ -194,7 +194,7 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
       '#required' => TRUE,
       '#rows' => 10,
       // TEMP FOR DEV!
-      '#default_value' => 'Dear [name], it is [current-date:long] today.', //isset($saved_message['value']) ? $saved_message['value'] : '',
+      '#default_value' => 'Dear [views-send:name], it is [current-date:long] today.', //isset($saved_message['value']) ? $saved_message['value'] : '',
     );
 
     $form['mail']['token'] = array(
@@ -305,7 +305,10 @@ class ViewsSendVBOOperations extends ViewsBulkOperationsBaseOperation {
     // When in batch context, $data is an entity, and $context[rows] is just a
     // single view result row.
     $entity = $data;
-    $row = $context['rows'];
+    $row = reset($context['rows']);
+    $row_id = key($context['rows']);
+
+    $view = $this->formOptions['view'];
 
     global $user;
 
