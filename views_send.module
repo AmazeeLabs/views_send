@@ -1111,6 +1111,14 @@ function _views_send_prepare_mail(&$message, $plain_format=TRUE, $attachments=ar
   $message['body'] = $mail['body'];
   $message['send'] = $mail['send'];
   $message['headers'] = serialize($mail['headers']);
+
+  if (module_exists('mandrill') && !empty($params['attachments'])) {
+    $attachments = array();
+    foreach ($params['attachments'] as $a) {
+      $attachments[] = drupal_realpath($a['uri']);
+    }
+    $message['attachments'] = $attachments;
+  }
 }
 
 /**
@@ -1139,6 +1147,11 @@ function views_send_deliver($message) {
   if (VIEWS_SEND_MIMEMAIL) {
     _views_send_mailsystem_set($key);
   }
+
+  if (module_exists('mandrill') && !empty($message->attachments)) {
+    $mail['attachments'] = $message->attachments;
+  }
+
 
   // Mime encode the subject before passing to the mail function 
   // to work around a bug in Drupal's mime_header_encode.
